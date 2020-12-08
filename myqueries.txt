@@ -1,0 +1,13 @@
+select * from assignment where assignmentid=(Select assignmentid from student_assignment where studentid=1)
+INSERT INTO `student_assignment`(`studentid`, `subjectid`, `assignmentid`) SELECT studentid,1,(Select assignmentid from assignment where assignment='do database') from student_information where section="A"
+INSERT INTO `student_assignment`(`studentid`, `subjectid`, `assignmentid`) SELECT studentid,1,(Select assignmentid from assignment where assignment='do database') from student_information where section="A"
+
+add assignment postman syntax
+{
+"assignment":"do4",
+"assigndate":"2020-02-05",
+"duedate":"2020-03-05",
+"subject":"history",
+"_class":"5",
+"section":"A"
+}
