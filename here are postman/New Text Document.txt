@@ -1,0 +1,36 @@
+
+http://localhost:3000/activity
+{
+"date":"2020-02-02",
+"attendance": "present",
+"notice": "notice",
+"complain":"complain",
+"studentid":"0"
+}
+
+
+http://localhost:3000/addassignment
+{
+          "assignment":"assignment",
+          "assigndate":"2020-02-02",
+          "duedate":"2020-03-05",
+          "subject":"science",
+          "_class":"5",
+          "section":"A"
+}
+
+
+http://localhost:3000/addsubject
+{
+          "subjectname":"history"
+}
+
+
+{
+          "studentname":"raieshsir",
+          "_class":"5",
+          "section":"A",
+          "email":"raieshg@gmail.com",
+          "phonenumber":"phonenumber",
+          "password":"password"
+          }

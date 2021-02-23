@@ -20,23 +20,22 @@ app.use(express.json());
 var bodyParser = require('body-parser');
 app.use(express.urlencoded({ extended: true }))
 app.use(helmet());
-app.post('/signup', function(req, res) {
+
+
+app.post('/addstudent', function(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // If needed
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); 
     res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); 
-  // in a production environment you would ideally add salt and store that in the database as well
-  // or even use bcrypt instead of sha256. No need for external libs with sha256 though
   var password = crypto.createHash('sha256').update(req.body.password).digest('hex');
-  console.log("hi");
   con.query("SELECT * FROM student_information WHERE email = ?", [req.body.email], function(err, row) {
     console.log(row.length);
     if(row.length!=0) {
-      console.error("can't create user " + req.body.email);
+      console.error("can't create student " + req.body.email);
       res.status(409);
       res.send("An user with that email already exists");
     } else {
-      console.log("Can create user " + req.body.email);
-      con.query("INSERT INTO student_information(`studentname`,`class`,`section`,`email`,`phonenumber`) VALUES (?, ?,?,?,?)", [req.body.studentname,req.body._class,req.body.section,req.body.email,req.body.phonenumber,password]);
+      console.log("Can create student " + req.body.email);
+      con.query("INSERT INTO student_information(`studentname`,`class`,`section`,`email`,`phonenumber`,`password`) VALUES (?, ?,?,?,?,?)", [req.body.studentname,req.body._class,req.body.section,req.body.email,req.body.phonenumber,password]);
         res.status(201);
       res.send("Success");
     }
@@ -83,24 +82,22 @@ app.get('/data', function(req, res) {
 });
 app.post('/activity', function(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // If needed
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); 
-// in a production environment you would ideally add salt and store that in the database as well
-// or even use bcrypt instead of sha256. No need for external libs with sha256 though
-console.log("hi");
-con.query("INSERT INTO daily_activities(`date`,`attendance`,`notice`,`complain`,`studentid`) VALUES (?,?,?,?,?)", [req.body.date,req.body.attendance,req.body.notice,req.body.complain,req.body.studentid], function(err, row){
+
+con.query("INSERT INTO daily_activities(`date`,`attendance`,`notice`,`complaines`,`studentid`) VALUES (?,?,?,?,?)", [req.body.date,req.body.attendance,req.body.notice,req.body.complain,req.body.studentid], function(err, row){
   res.status(201);
+
   res.send("Success");
+});
 
 
 });
-});
-app.post('/assignment', function(req, res) {
+app.post('/addassignment', function(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // If needed
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); 
-// in a production environment you would ideally add salt and store that in the database as well
-// or even use bcrypt instead of sha256. No need for external libs with sha256 though
+
 console.log("hi");
 con.query("INSERT INTO assignment(`assignment`,`assigndate`,`duedate`) VALUES (?,?,?)", [req.body.assignment,req.body.assigndate,req.body.duedate], function(err, row){
   res.status(201);
@@ -111,10 +108,8 @@ con.query("INSERT INTO assignment(`assignment`,`assigndate`,`duedate`) VALUES (?
 });
 app.post('/addsubject', function(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // If needed
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); 
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); 
-// in a production environment you would ideally add salt and store that in the database as well
-// or even use bcrypt instead of sha256. No need for external libs with sha256 though
 console.log("hi");
 con.query("INSERT INTO subject(`subjectname`) VALUES (?)", [req.body.subjectname], function(err, row){
   res.status(201);
@@ -122,6 +117,63 @@ con.query("INSERT INTO subject(`subjectname`) VALUES (?)", [req.body.subjectname
 });
 });
 
+app.get('/getactivity', function(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // If needed
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); 
+// in a production environment you would ideally add salt and store that in the database as well
+// or even use bcrypt instead of sha256. No need for external libs with sha256 though
+console.log("hi");
+  try{
+    res.statusCode = 200;
+    con.query("SELECT * FROM `daily_activities` WHERE studentid=0 and date like '%' ? '%'",[req.query.date],(err,results) => {
+
+    res.json(results);});
+
+}
+catch(e){
+    console.log("some error");
+    console.log(e);
+    res.sendStatus(500);
+}
+});
+
+
+
+app.get('/getassignment', function(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // If needed
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); 
+// in a production environment you would ideally add salt and store that in the database as well
+// or even use bcrypt instead of sha256. No need for external libs with sha256 though
+console.log("hi");
+  try{
+    res.statusCode = 200;
+    con.query("SELECT * from assignment,subject where assignmentid IN(Select assignmentid from student_assignment where studentid=0) and duedate like '%' and assigndate like '%' ? '%' and subjectname = (Select subjectname from subject where subjectid IN(Select subjectid from student_assignment where studentid=0))",[req.query.assigndate],(err,results) => {
+    //http://localhost:3000/getassignment?assigndate=2020-02-02 postmanquery
+      res.json(results);});
+    }
+catch(e){
+    console.log("some error");
+    console.log(e);
+    res.sendStatus(500);}});
+
+app.get('/getstudentinformation', function(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); 
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); 
+
+  try{
+    res.statusCode = 200;
+    con.query("SELECT * from `student_information` where `studentid`=0",[req.query.studentid],(err,results) => {
+    res.json(results);});
+  }
+
+catch(e){
+    console.log("some error");
+    console.log(e);
+    res.sendStatus(500);
+}});
 
 
 

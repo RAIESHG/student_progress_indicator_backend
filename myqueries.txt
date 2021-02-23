@@ -11,3 +11,13 @@ add assignment postman syntax
 "_class":"5",
 "section":"A"
 }
+
+select daily activities from date
+SELECT * FROM `daily_activities` WHERE studentid=1 and date like '%2020-02-05'
+
+
+get assignment of student
+select * from assignment where assignmentid IN(Select assignmentid from student_assignment where studentid=1) and duedate like '%' and assigndate like '%'
+
+assignment along with subject
+select * from assignment,subject where assignmentid IN(Select assignmentid from student_assignment where studentid=1) and duedate like '%' and assigndate like '%' and subjectname = (Select subjectname from subject where subjectid IN(Select subjectid from student_assignment where studentid=1))
