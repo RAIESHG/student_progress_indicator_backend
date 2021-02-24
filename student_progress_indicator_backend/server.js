@@ -48,7 +48,7 @@ app.post('/login',function(req, res) {
     res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); 
   console.log(req.body.email + " attempted login");
   var password = crypto.createHash('sha256').update(req.body.password).digest('hex');
-  con.query("SELECT * FROM student_information WHERE (email, password) = (?, ?)", [req.body.email, password], function(err, row) {
+  con.query("SELECT studentid FROM student_information WHERE (email, password) = (?, ?)", [req.body.email, password], function(err, row) {
     console.log(row.length);
     if(row.length!=0) {
       var payload = {
@@ -57,7 +57,8 @@ app.post('/login',function(req, res) {
 
       var token = jwt.sign(payload, KEY, {algorithm: 'HS256', expiresIn: "15d"});
       console.log("Success");
-      res.send(token);
+      res.send(row);
+    
     } else {
       console.error("Failure");
       res.status(401)
@@ -102,7 +103,7 @@ console.log("hi");
 con.query("INSERT INTO assignment(`assignment`,`assigndate`,`duedate`) VALUES (?,?,?)", [req.body.assignment,req.body.assigndate,req.body.duedate], function(err, row){
   res.status(201);
   res.send("Success");
-  con.query("INSERT INTO `student_assignment`(`studentid`, `subjectid`, `assignmentid`) SELECT studentid,(Select subjectid from subject where subjectname=?),(Select assignmentid from assignment where assignment=?) from student_information where section=? and class=?", [req.body.subject,req.body.assignment,req.body.section,req.body._class]);
+  con.query("INSERT INTO `student_assignment`(`studentid`, `subjectid`, `assignmentid`) SELECT studentid,(Select subjectid from subject where subjectname=?),(Select assignmentid from assignment where assignment=? and assigndate=?) from student_information where section=? and class=?", [req.body.subject,req.body.assignment,req.body.assigndate,req.body.section,req.body._class]);
 
 });
 });
@@ -126,7 +127,7 @@ app.get('/getactivity', function(req, res) {
 console.log("hi");
   try{
     res.statusCode = 200;
-    con.query("SELECT * FROM `daily_activities` WHERE studentid=0 and date like '%' ? '%'",[req.query.date],(err,results) => {
+    con.query("SELECT * FROM `daily_activities` WHERE studentid=? and date like '%' ? '%'",[req.query.studentid,req.query.date],(err,results) => {
 
     res.json(results);});
 
@@ -149,7 +150,7 @@ app.get('/getassignment', function(req, res) {
 console.log("hi");
   try{
     res.statusCode = 200;
-    con.query("SELECT * from assignment,subject where assignmentid IN(Select assignmentid from student_assignment where studentid=0) and duedate like '%' and assigndate like '%' ? '%' and subjectname = (Select subjectname from subject where subjectid IN(Select subjectid from student_assignment where studentid=0))",[req.query.assigndate],(err,results) => {
+    con.query("SELECT * from assignment,subject where assignmentid IN(Select assignmentid from student_assignment where studentid=?) and duedate like '%' and assigndate like '%' ? '%' and subjectname = (Select subjectname from subject where subjectid IN(Select subjectid from student_assignment where studentid=?))",[req.query.studentid,req.query.assigndate,req.query.studentid],(err,results) => {
     //http://localhost:3000/getassignment?assigndate=2020-02-02 postmanquery
       res.json(results);});
     }
@@ -165,7 +166,7 @@ app.get('/getstudentinformation', function(req, res) {
 
   try{
     res.statusCode = 200;
-    con.query("SELECT * from `student_information` where `studentid`=0",[req.query.studentid],(err,results) => {
+    con.query("SELECT * from `student_information` where `studentid`=?",[req.query.studentid],(err,results) => {
     res.json(results);});
   }
 
@@ -175,7 +176,26 @@ catch(e){
     res.sendStatus(500);
 }});
 
+app.get('/getprogress', function(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // If needed
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); 
+// in a production environment you would ideally add salt and store that in the database as well
+// or even use bcrypt instead of sha256. No need for external libs with sha256 though
+console.log("hi");
+  try{
+    res.statusCode = 200;
+    con.query("Select (SELECT COUNT(*) from daily_activities where studentid=? and attendance='present')/(SELECT COUNT(*) from daily_activities where studentid=? )*100 as attendance, (SELECT COUNT(*) from daily_activities where studentid=? and complaines!='-')/(SELECT COUNT(*) from daily_activities where studentid=? and attendance='present')*100 as complaines from daily_activities",[req.query.studentid,req.query.studentid,req.query.studentid,req.query.studentid],(err,results) => {
 
+    res.json(results);});
+
+}
+catch(e){
+    console.log("some error");
+    console.log(e);
+    res.sendStatus(500);
+}
+});
 
 
 let port = process.env.PORT || 3000;
