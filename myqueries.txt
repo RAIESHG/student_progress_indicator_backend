@@ -25,5 +25,8 @@ SELECT COUNT(*) FROM `daily_activities` WHERE attendance='present' and studentid
 
 
 attendance percentage
-Select (SELECT COUNT(*) from daily_activities where studentid=0 and attendance='present')/(SELECT COUNT(*) from daily_activities where studentid=0 )*100 as attendance, (SELECT COUNT(*) from daily_activities where studentid=0 and complaines='-')/(SELECT COUNT(*) from daily_activities where studentid=0 and attendance='present') as complaines from daily_activities
+Select (SELECT COUNT(*) from daily_activities where studentid=0 and attendance='present')/(SELECT COUNT(*) from daily_activities where studentid=0 )*100 as attendance,Select (Select SUM(grades) from student_result where studentid="02")/(SELECT COUNT(*) from student_result where studentid="02") as averagegrade from student_result GROUP BY studentid as averagegrade, (SELECT COUNT(*) from daily_activities where studentid=0 and complaines='-')/(SELECT COUNT(*) from daily_activities where studentid=0 and attendance='present') as complaines from daily_activities
+
+average grades
+Select (Select SUM(grades) from student_result where studentid="02")/(SELECT COUNT(*) from student_result where studentid="02") as averagegrade from student_result GROUP BY studentid
 

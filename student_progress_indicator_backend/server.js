@@ -107,6 +107,18 @@ con.query("INSERT INTO assignment(`assignment`,`assigndate`,`duedate`) VALUES (?
 
 });
 });
+app.post('/addresult', function(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // If needed
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); 
+
+console.log("hi");
+con.query("INSERT INTO student_result(`grades`,`subject`,`studentid`,`date`) VALUES (?,?,?,?)", [req.body.grade,req.body.subject,req.body.studentid,req.body.date], function(err, row){
+  res.status(201);
+  res.send(err);
+
+});
+});
 app.post('/addsubject', function(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); 
@@ -132,9 +144,32 @@ console.log("hi");
     res.json(results);});
 
 }
+
 catch(e){
     console.log("some error");
     console.log(e);
+    res.sendStatus(500);
+}
+});
+app.get('/getresult', function(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // If needed
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); 
+// in a production environment you would ideally add salt and store that in the database as well
+// or even use bcrypt instead of sha256. No need for external libs with sha256 though
+console.log("hi");
+  try{
+    res.statusCode = 200;
+    con.query("SELECT * FROM `student_result` WHERE studentid=? and date like '%' ? '%'",[req.query.studentid,req.query.date],(err,results) => {
+
+    res.json(results);});
+
+}
+
+catch(e){
+    console.log("some error");
+    console.log(e);
+    res.json(err);
     res.sendStatus(500);
 }
 });
@@ -185,7 +220,27 @@ app.get('/getprogress', function(req, res) {
 console.log("hi");
   try{
     res.statusCode = 200;
-    con.query("Select (SELECT COUNT(*) from daily_activities where studentid=? and attendance='present')/(SELECT COUNT(*) from daily_activities where studentid=? )*100 as attendance, (SELECT COUNT(*) from daily_activities where studentid=? and complaines!='-')/(SELECT COUNT(*) from daily_activities where studentid=? and attendance='present')*100 as complaines from daily_activities",[req.query.studentid,req.query.studentid,req.query.studentid,req.query.studentid],(err,results) => {
+    con.query("Select (SELECT COUNT(*) from daily_activities where studentid=? and attendance='present')/(SELECT COUNT(*) from daily_activities where studentid=? )*100 as attendance, (Select SUM(grades) from student_result where studentid=?)/(SELECT COUNT(*) from student_result where studentid=? ) as averagegrade, (SELECT COUNT(*) from daily_activities where studentid=? and complaines='-')/(SELECT COUNT(*) from daily_activities where studentid=? and attendance='present')*100 as complaines from daily_activities,student_result GROUP by attendance,student_result.studentid",[req.query.studentid,req.query.studentid,req.query.studentid,req.query.studentid,req.query.studentid,req.query.studentid],(err,results) => {
+
+    res.json(results);});
+
+}
+catch(e){
+    console.log("some error");
+    console.log(e);
+    res.sendStatus(500);
+}
+});
+app.get('/getstudents', function(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // If needed
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); 
+// in a production environment you would ideally add salt and store that in the database as well
+// or even use bcrypt instead of sha256. No need for external libs with sha256 though
+console.log("hi");
+  try{
+    res.statusCode = 200;
+    con.query("Select studentname,studentid from student_information where class=? and section=?",[req.query.classs,req.query.section],(err,results) => {
 
     res.json(results);});
 
